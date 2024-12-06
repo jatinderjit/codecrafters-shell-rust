@@ -17,3 +17,7 @@ pub(crate) fn find_binary(name: &str) -> Option<PathBuf> {
     }
     None
 }
+
+pub(crate) fn home_dir() -> PathBuf {
+    env::var("HOME").unwrap().into()
+}
