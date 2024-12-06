@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::env_path::find_binary;
+use crate::executables::Executable;
 
 pub(crate) enum Builtin {
     Echo,
@@ -51,11 +51,9 @@ fn process_type(args: Option<&str>) {
         Some(subcommand) => subcommand,
         None => return,
     };
-    match subcommand.parse::<Builtin>() {
-        Ok(_) => println!("{subcommand} is a shell builtin"),
-        Err(_) => match find_binary(subcommand) {
-            Some(path) => println!("{subcommand} is {}", path.to_string_lossy()),
-            None => println!("{subcommand}: not found"),
-        },
+    match subcommand.parse::<Executable>() {
+        Ok(Executable::Builtin(_)) => println!("{subcommand} is a shell builtin"),
+        Ok(Executable::Binary(path)) => println!("{subcommand} is {}", path.to_string_lossy()),
+        Err(_) => println!("{subcommand}: not found"),
     };
 }

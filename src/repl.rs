@@ -1,6 +1,10 @@
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    path::PathBuf,
+    process::Command,
+};
 
-use crate::builtins::Builtin;
+use crate::executables::Executable;
 
 pub fn run() {
     loop {
@@ -22,9 +26,23 @@ fn process(input: &str) {
     let command = command_with_args[0];
     let args = command_with_args.get(1).copied();
 
-    let builtin = command.parse::<Builtin>();
-    match builtin {
-        Ok(builtin) => builtin.execute(args),
+    let executable = command.parse::<Executable>();
+    match executable {
+        Ok(Executable::Builtin(builtin)) => builtin.execute(args),
+        Ok(Executable::Binary(path)) => execute_binary(path, args),
         Err(_) => println!("{command}: command not found"),
+    };
+}
+
+fn execute_binary(path: PathBuf, args: Option<&str>) {
+    let mut command = Command::new(path);
+    if let Some(args) = args {
+        command.arg(args);
+    }
+    match command.spawn() {
+        Ok(mut child) => {
+            child.wait().expect("Error waiting for child");
+        }
+        Err(err) => eprintln!("{err}"),
     };
 }
