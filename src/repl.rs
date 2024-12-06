@@ -39,10 +39,5 @@ fn execute_binary(path: PathBuf, args: Option<&str>) {
     if let Some(args) = args {
         command.arg(args);
     }
-    match command.spawn() {
-        Ok(mut child) => {
-            child.wait().expect("Error waiting for child");
-        }
-        Err(err) => eprintln!("{err}"),
-    };
+    command.status().expect("Failed to execute process");
 }
