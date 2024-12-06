@@ -17,10 +17,6 @@ pub fn run() {
     }
 }
 
-fn invalid_command(command: &str) {
-    println!("{command}: command not found");
-}
-
 fn process(input: &str) {
     let command_with_args = input.splitn(2, ' ').collect::<Vec<_>>();
     let command = command_with_args[0];
@@ -29,6 +25,6 @@ fn process(input: &str) {
     let builtin = command.parse::<Builtin>();
     match builtin {
         Ok(builtin) => builtin.execute(args),
-        Err(_) => invalid_command(command),
+        Err(_) => println!("{command}: command not found"),
     };
 }

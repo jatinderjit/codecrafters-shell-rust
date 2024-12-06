@@ -3,6 +3,7 @@ use std::str::FromStr;
 pub(crate) enum Builtin {
     Echo,
     Exit,
+    Type,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -17,6 +18,7 @@ impl FromStr for Builtin {
         match s {
             "echo" => Ok(Echo),
             "exit" => Ok(Exit),
+            "type" => Ok(Type),
             _ => Err(ParseBuiltinError),
         }
     }
@@ -27,8 +29,9 @@ impl Builtin {
         use Builtin::*;
 
         match self {
-            Exit => process_exit(args),
             Echo => println!("{}", args.unwrap_or("")),
+            Exit => process_exit(args),
+            Type => process_type(args),
         }
     }
 }
@@ -39,4 +42,13 @@ fn process_exit(args: Option<&str>) -> ! {
         None => 0,
     };
     std::process::exit(code);
+}
+
+fn process_type(args: Option<&str>) {
+    if let Some(subcommand) = args {
+        match subcommand.parse::<Builtin>() {
+            Ok(_) => println!("{subcommand} is a shell builtin"),
+            Err(_) => println!("{subcommand}: not found"),
+        }
+    };
 }
