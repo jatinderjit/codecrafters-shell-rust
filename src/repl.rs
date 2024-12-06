@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 
+use crate::builtins::Builtin;
+
 pub fn run() {
     loop {
         print!("$ ");
@@ -22,19 +24,11 @@ fn invalid_command(command: &str) {
 fn process(input: &str) {
     let command_with_args = input.splitn(2, ' ').collect::<Vec<_>>();
     let command = command_with_args[0];
-    let args = command_with_args.get(1);
+    let args = command_with_args.get(1).copied();
 
-    match command {
-        "exit" => exit(command_with_args.get(1).copied()),
-        "echo" => println!("{}", args.unwrap_or(&"")),
-        _ => invalid_command(command),
+    let builtin = command.parse::<Builtin>();
+    match builtin {
+        Ok(builtin) => builtin.execute(args),
+        Err(_) => invalid_command(command),
     };
-}
-
-fn exit(args: Option<&str>) -> ! {
-    let code = match args {
-        Some(code) => code.parse().unwrap_or(1),
-        None => 0,
-    };
-    std::process::exit(code);
 }
