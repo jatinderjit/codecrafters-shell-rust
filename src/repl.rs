@@ -83,8 +83,8 @@ fn parse_args(input: &str) -> Result<Vec<String>, &'static str> {
 
 fn parse_arg(it: &mut Peekable<Chars>) -> Result<String, &'static str> {
     match it.peek().copied() {
-        Some(ch) if ch == '\'' => return parse_arg_in_single_quotes(it),
-        Some(ch) if ch == '"' => return parse_arg_in_double_quotes(it),
+        Some('\'') => return parse_arg_in_single_quotes(it),
+        Some('"') => return parse_arg_in_double_quotes(it),
         Some(_) => {}
         None => return Ok(String::new()),
     };
