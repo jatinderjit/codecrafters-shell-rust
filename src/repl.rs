@@ -77,33 +77,71 @@ fn parse_args(input: &str) -> Result<Vec<String>, &'static str> {
 }
 
 fn parse_arg(it: &mut Peekable<Chars>) -> Result<String, &'static str> {
+    match it.peek().copied() {
+        Some(ch) if ch == '\'' => return parse_arg_in_single_quotes(it),
+        Some(ch) if ch == '"' => return parse_arg_in_double_quotes(it),
+        Some(_) => {}
+        None => return Ok(String::new()),
+    };
+
+    // Argument not wrapped in quotes.
     let mut arg = vec![];
-    let mut single_quote = it.peek() == Some(&'\'');
-    if single_quote {
-        it.next();
-    }
     for ch in it {
-        if ch == '\'' {
-            if !single_quote {
-                return Err("Invalid arguments");
-            }
-            single_quote = false;
-            break;
-        }
-        if !single_quote && (ch == ' ' || ch == '\t') {
+        if ch == ' ' || ch == '\t' {
             break;
         }
         arg.push(ch);
     }
-    if single_quote {
-        return Err("Invalid arguments");
+    Ok(arg.into_iter().collect())
+}
+
+fn parse_arg_in_single_quotes(it: &mut Peekable<Chars>) -> Result<String, &'static str> {
+    it.next();
+    let mut arg = vec![];
+    let mut closed = false;
+    for ch in it {
+        if ch == '\'' {
+            closed = true;
+            break;
+        }
+        arg.push(ch);
+    }
+    if !closed {
+        return Err("Invalid arguments: quotes not closed");
+    }
+    Ok(arg.into_iter().collect())
+}
+
+fn parse_arg_in_double_quotes(it: &mut Peekable<Chars>) -> Result<String, &'static str> {
+    it.next();
+    let mut arg = vec![];
+    let mut closed = false;
+    while let Some(ch) = it.next() {
+        if ch == '"' {
+            closed = true;
+            break;
+        }
+        if ch == '\\' {
+            match it.peek().copied() {
+                Some(next_ch) if ['$', '`', '"', '\\'].contains(&next_ch) => {
+                    it.next();
+                    arg.push(next_ch);
+                }
+                _ => arg.push(ch),
+            };
+        } else {
+            arg.push(ch);
+        }
+    }
+    if !closed {
+        return Err("Invalid arguments: quotes not closed");
     }
     Ok(arg.into_iter().collect())
 }
 
 fn skip_whitespace(it: &mut Peekable<Chars>) {
-    while let Some(ch) = it.peek() {
-        if *ch == ' ' || *ch == '\t' {
+    while let Some(ch) = it.peek().copied() {
+        if ch == ' ' || ch == '\t' {
             it.next();
         } else {
             break;
