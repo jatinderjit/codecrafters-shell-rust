@@ -49,17 +49,23 @@ impl Builtin {
 
 #[allow(deprecated)]
 fn process_cd(args: Option<&str>) {
-    let mut path = match args {
+    let path = match args {
         Some(path) => path.into(),
         None => env::home_dir().unwrap(),
     };
-    if path.starts_with("~") {
-        path = path.strip_prefix("~").unwrap().to_owned();
-        path = env::home_dir().unwrap().join(path);
+    let directory = if path.starts_with("~") {
+        let path = path.strip_prefix("~").unwrap().to_owned();
+        env::home_dir().unwrap().join(path)
     } else if path.is_relative() {
-        path = current_dir().unwrap().join(path);
+        current_dir().unwrap().join(&path)
+    } else {
+        path.clone()
+    };
+    if directory.is_dir() {
+        set_current_dir(path).unwrap();
+    } else {
+        println!("cd: {}: No such file or directory", path.display());
     }
-    set_current_dir(path).unwrap();
 }
 
 fn process_exit(args: Option<&str>) -> ! {
