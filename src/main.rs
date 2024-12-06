@@ -23,13 +23,14 @@ fn repl() {
 fn process(command: &str) {
     let command_with_args = command.splitn(2, ' ').collect::<Vec<_>>();
 
-    if command_with_args[0] == "exit" {
-        exit(&command_with_args[1..]);
-    }
-    println!("{command}: command not found");
+    match command_with_args[0] {
+        "exit" => exit(&command_with_args[1..]),
+        "echo" => println!("{}", command_with_args.get(1).unwrap_or(&"")),
+        _ => println!("{command}: command not found"),
+    };
 }
 
-fn exit(args: &[&str]) {
+fn exit(args: &[&str]) -> ! {
     if args.len() == 1 {
         let code = args[0].parse::<u8>().unwrap_or(1);
         std::process::exit(code as i32);
