@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use crate::env_path::find_binary;
+
 pub(crate) enum Builtin {
     Echo,
     Exit,
@@ -45,10 +47,15 @@ fn process_exit(args: Option<&str>) -> ! {
 }
 
 fn process_type(args: Option<&str>) {
-    if let Some(subcommand) = args {
-        match subcommand.parse::<Builtin>() {
-            Ok(_) => println!("{subcommand} is a shell builtin"),
-            Err(_) => println!("{subcommand}: not found"),
-        }
+    let subcommand = match args {
+        Some(subcommand) => subcommand,
+        None => return,
+    };
+    match subcommand.parse::<Builtin>() {
+        Ok(_) => println!("{subcommand} is a shell builtin"),
+        Err(_) => match find_binary(subcommand) {
+            Some(path) => println!("{subcommand} is {}", path.to_string_lossy()),
+            None => println!("{subcommand}: not found"),
+        },
     };
 }
