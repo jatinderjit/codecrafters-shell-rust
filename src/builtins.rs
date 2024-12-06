@@ -1,10 +1,11 @@
-use std::str::FromStr;
+use std::{env, str::FromStr};
 
 use crate::executables::Executable;
 
 pub(crate) enum Builtin {
     Echo,
     Exit,
+    Pwd,
     Type,
 }
 
@@ -20,6 +21,7 @@ impl FromStr for Builtin {
         match s {
             "echo" => Ok(Echo),
             "exit" => Ok(Exit),
+            "pwd" => Ok(Pwd),
             "type" => Ok(Type),
             _ => Err(ParseBuiltinError),
         }
@@ -33,6 +35,7 @@ impl Builtin {
         match self {
             Echo => println!("{}", args.unwrap_or("")),
             Exit => process_exit(args),
+            Pwd => println!("{}", env::current_dir().unwrap().display()),
             Type => process_type(args),
         }
     }
@@ -53,7 +56,7 @@ fn process_type(args: Option<&str>) {
     };
     match subcommand.parse::<Executable>() {
         Ok(Executable::Builtin(_)) => println!("{subcommand} is a shell builtin"),
-        Ok(Executable::Binary(path)) => println!("{subcommand} is {}", path.to_string_lossy()),
+        Ok(Executable::Binary(path)) => println!("{subcommand} is {}", path.display()),
         Err(_) => println!("{subcommand}: not found"),
     };
 }
