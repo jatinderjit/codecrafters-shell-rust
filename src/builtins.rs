@@ -1,8 +1,12 @@
-use std::{env, str::FromStr};
+use std::{
+    env::{self, current_dir, set_current_dir},
+    str::FromStr,
+};
 
 use crate::executables::Executable;
 
 pub(crate) enum Builtin {
+    Cd,
     Echo,
     Exit,
     Pwd,
@@ -19,6 +23,7 @@ impl FromStr for Builtin {
         use Builtin::*;
 
         match s {
+            "cd" => Ok(Cd),
             "echo" => Ok(Echo),
             "exit" => Ok(Exit),
             "pwd" => Ok(Pwd),
@@ -33,12 +38,28 @@ impl Builtin {
         use Builtin::*;
 
         match self {
+            Cd => process_cd(args),
             Echo => println!("{}", args.unwrap_or("")),
             Exit => process_exit(args),
             Pwd => println!("{}", env::current_dir().unwrap().display()),
             Type => process_type(args),
         }
     }
+}
+
+#[allow(deprecated)]
+fn process_cd(args: Option<&str>) {
+    let mut path = match args {
+        Some(path) => path.into(),
+        None => env::home_dir().unwrap(),
+    };
+    if path.starts_with("~") {
+        path = path.strip_prefix("~").unwrap().to_owned();
+        path = env::home_dir().unwrap().join(path);
+    } else if path.is_relative() {
+        path = current_dir().unwrap().join(path);
+    }
+    set_current_dir(path).unwrap();
 }
 
 fn process_exit(args: Option<&str>) -> ! {
