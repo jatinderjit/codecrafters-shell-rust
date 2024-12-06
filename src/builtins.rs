@@ -3,7 +3,10 @@ use std::{
     str::FromStr,
 };
 
-use crate::{env_path::home_dir, executables::Executable};
+use crate::{
+    env_path::{expand_home, home_dir},
+    executables::Executable,
+};
 
 pub(crate) enum Builtin {
     Cd,
@@ -49,22 +52,17 @@ impl Builtin {
 
 #[allow(deprecated)]
 fn process_cd(args: Option<&str>) {
-    let path = match args {
-        Some(path) => path.into(),
+    let mut path = match args {
+        Some(path) => expand_home(path),
         None => home_dir(),
     };
-    let directory = if path.starts_with("~") {
-        let path = path.strip_prefix("~").unwrap().to_owned();
-        home_dir().join(path)
-    } else if path.is_relative() {
-        current_dir().unwrap().join(&path)
+    if path.is_relative() {
+        path = current_dir().unwrap().join(&path);
+    }
+    if path.is_dir() {
+        set_current_dir(path).unwrap();
     } else {
-        path.clone()
-    };
-    if directory.is_dir() {
-        set_current_dir(directory).unwrap();
-    } else {
-        println!("cd: {}: No such file or directory", path.display());
+        println!("cd: {}: No such file or directory", args.unwrap_or(""));
     }
 }
 

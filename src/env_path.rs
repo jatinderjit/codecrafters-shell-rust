@@ -1,4 +1,7 @@
-use std::{env, path::PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 pub(crate) fn env_paths() -> Vec<PathBuf> {
     env::var("PATH")
@@ -20,4 +23,13 @@ pub(crate) fn find_binary(name: &str) -> Option<PathBuf> {
 
 pub(crate) fn home_dir() -> PathBuf {
     env::var("HOME").unwrap().into()
+}
+
+pub(crate) fn expand_home<P: AsRef<Path>>(path: P) -> PathBuf {
+    let path = path.as_ref();
+    if path.starts_with("~") {
+        home_dir().join(path.strip_prefix("~").unwrap())
+    } else {
+        path.to_owned()
+    }
 }
