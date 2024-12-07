@@ -54,15 +54,15 @@ fn execute_binary(path: PathBuf, args: Vec<String>) {
     command.status().expect("Failed to execute process");
 }
 
-fn parse_command(input: &str) -> Result<(Option<&str>, Vec<String>), &'static str> {
-    let mut command_with_args = input.splitn(2, ' ');
-    let command = command_with_args.next();
-    let args = match command_with_args.next() {
-        Some(input) => match parse_args(input) {
-            Ok(args) => args,
-            Err(err) => return Err(err),
-        },
-        None => Vec::new(),
+fn parse_command(input: &str) -> Result<(Option<String>, Vec<String>), &'static str> {
+    let mut args = match parse_args(input) {
+        Ok(args) => args,
+        Err(err) => return Err(err),
+    };
+    let command = if args.is_empty() {
+        None
+    } else {
+        Some(args.remove(0))
     };
     Ok((command, args))
 }
