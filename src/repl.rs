@@ -83,19 +83,29 @@ fn parse_args(input: &str) -> Result<Vec<String>, &'static str> {
 
 fn parse_arg(it: &mut Peekable<Chars>) -> Result<String, &'static str> {
     match it.peek().copied() {
-        Some('\'') => return parse_arg_in_single_quotes(it),
-        Some('"') => return parse_arg_in_double_quotes(it),
-        Some(_) => {}
-        None => return Ok(String::new()),
-    };
+        Some('\'') => parse_arg_in_single_quotes(it),
+        Some('"') => parse_arg_in_double_quotes(it),
+        Some(_) => parse_naked_arg(it),
+        None => Ok(String::new()),
+    }
+}
 
+fn parse_naked_arg(it: &mut Peekable<Chars>) -> Result<String, &'static str> {
     // Argument not wrapped in quotes.
     let mut arg = vec![];
-    for ch in it {
+    while let Some(ch) = it.next() {
         if ch == ' ' || ch == '\t' {
             break;
         }
-        arg.push(ch);
+        if ch == '\\' {
+            let next_ch = match it.next() {
+                Some(ch) => ch,
+                None => return Err("No character to escape"),
+            };
+            arg.push(next_ch);
+        } else {
+            arg.push(ch);
+        }
     }
     Ok(arg.into_iter().collect())
 }
